@@ -172,12 +172,12 @@ open class SymbolParser: SyntaxVisitor {
         if let name = node.pattern.as(IdentifierPatternSyntax.self)?.identifier.text {
             if let typeAnnotation = node.typeAnnotation?.as(TypeAnnotationSyntax.self),
                let nonOptionalName = typeAnnotation.type.as(IdentifierTypeSyntax.self)?.name.text {
-                properties.append(MemberProperty(name: name, type: nonOptionalName))
+                properties.append(MemberProperty(accessControl: "", name: name, type: nonOptionalName))
             } else if let typeAnnotation = node.typeAnnotation?.as(TypeAnnotationSyntax.self),
                       let optionalName = typeAnnotation.type.as(OptionalTypeSyntax.self)?.wrappedType.as(IdentifierTypeSyntax.self)?.name.text {
-                properties.append(MemberProperty(name: name, type: optionalName + "?"))
+                properties.append(MemberProperty(accessControl: "", name: name, type: optionalName + "?"))
             } else {
-                properties.append(MemberProperty(name: name, type: "_")) // type is not written?
+                properties.append(MemberProperty(accessControl: "", name: name, type: "_")) // type is not written?
             }
         }
     }

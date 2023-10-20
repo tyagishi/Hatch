@@ -13,8 +13,13 @@ public protocol InheritingSymbol {
     var inheritedTypes: [String] { get }
 }
 
+public protocol PropertiedSymbol {
+    var properties: [MemberProperty] { get }
+}
+
 // MARK: - Concrete Symbols
 public struct MemberProperty {
+    public let accessControl: String
     public let name: String
     public let type: String
 }
@@ -22,7 +27,7 @@ public struct MemberProperty {
 /// A swift protocol
 public typealias ProtocolType = Protocol
 
-public struct Protocol: Symbol, InheritingSymbol  {
+public struct Protocol: Symbol, InheritingSymbol, PropertiedSymbol {
     public let name: String
     public let children: [Symbol]
     public let inheritedTypes: [String]
@@ -30,7 +35,7 @@ public struct Protocol: Symbol, InheritingSymbol  {
 }
 
 /// A swift class
-public struct Class: Symbol, InheritingSymbol  {
+public struct Class: Symbol, InheritingSymbol, PropertiedSymbol {
     public let name: String
     public let children: [Symbol]
     public let inheritedTypes: [String]
@@ -38,7 +43,7 @@ public struct Class: Symbol, InheritingSymbol  {
 }
 
 /// A swift actor
-public struct Actor: Symbol, InheritingSymbol  {
+public struct Actor: Symbol, InheritingSymbol, PropertiedSymbol {
     public let name: String
     public let children: [Symbol]
     public let inheritedTypes: [String]
@@ -46,7 +51,7 @@ public struct Actor: Symbol, InheritingSymbol  {
 }
 
 /// A swift struct
-public struct Struct: Symbol, InheritingSymbol  {
+public struct Struct: Symbol, InheritingSymbol, PropertiedSymbol {
     public let name: String
     public let children: [Symbol]
     public let inheritedTypes: [String]
