@@ -8,6 +8,8 @@ open class SymbolParser: SyntaxVisitor {
 
     private var scope: Scope = .root(symbols: [])
 
+    private var properties: [MemberProperty] = []
+
     // MARK: - Public
 
     /// Parses `source` and returns a hierarchical list of symbols from a string
@@ -34,6 +36,7 @@ open class SymbolParser: SyntaxVisitor {
     /// Call in `visitPost(_ node:)` methods
     public func endScopeAndAddSymbol(makeSymbolWithChildrenInScope: (_ children: [Symbol]) -> Symbol) {
         scope.end(makeSymbolWithChildrenInScope: makeSymbolWithChildrenInScope)
+        properties = []
     }
 
     // MARK: - SwiftSyntax overridden methods
@@ -47,7 +50,8 @@ open class SymbolParser: SyntaxVisitor {
             Class(
                 name: node.name.text,
                 children: children,
-                inheritedTypes: node.inheritanceClause?.types ?? []
+                inheritedTypes: node.inheritanceClause?.types ?? [],
+                properties: properties
             )
         }
     }
@@ -61,7 +65,8 @@ open class SymbolParser: SyntaxVisitor {
             Actor(
                 name: node.name.text,
                 children: children,
-                inheritedTypes: node.inheritanceClause?.types ?? []
+                inheritedTypes: node.inheritanceClause?.types ?? [],
+                properties: properties
             )
         }
     }
@@ -75,7 +80,8 @@ open class SymbolParser: SyntaxVisitor {
             Protocol(
                 name: node.name.text,
                 children: children,
-                inheritedTypes: node.inheritanceClause?.types ?? []
+                inheritedTypes: node.inheritanceClause?.types ?? [],
+                properties: properties
             )
         }
     }
@@ -86,11 +92,14 @@ open class SymbolParser: SyntaxVisitor {
 
     open override func visitPost(_ node: StructDeclSyntax) {
         endScopeAndAddSymbol { children in
-            Struct(
+            let newStruct = Struct(
                 name: node.name.text,
                 children: children,
-                inheritedTypes: node.inheritanceClause?.types ?? []
+                inheritedTypes: node.inheritanceClause?.types ?? [],
+                properties: properties
             )
+            properties = []
+            return newStruct
         }
     }
 
@@ -155,6 +164,21 @@ open class SymbolParser: SyntaxVisitor {
                 children: children,
                 inheritedTypes: node.inheritanceClause?.types ?? []
             )
+        }
+    }
+    
+    // collect property info
+    open override func visitPost(_ node: PatternBindingSyntax) {
+        if let name = node.pattern.as(IdentifierPatternSyntax.self)?.identifier.text {
+            if let typeAnnotation = node.typeAnnotation?.as(TypeAnnotationSyntax.self),
+               let nonOptionalName = typeAnnotation.type.as(IdentifierTypeSyntax.self)?.name.text {
+                properties.append(MemberProperty(accessControl: "", name: name, type: nonOptionalName))
+            } else if let typeAnnotation = node.typeAnnotation?.as(TypeAnnotationSyntax.self),
+                      let optionalName = typeAnnotation.type.as(OptionalTypeSyntax.self)?.wrappedType.as(IdentifierTypeSyntax.self)?.name.text {
+                properties.append(MemberProperty(accessControl: "", name: name, type: optionalName + "?"))
+            } else {
+                properties.append(MemberProperty(accessControl: "", name: name, type: "_")) // type is not written?
+            }
         }
     }
 }
